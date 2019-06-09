@@ -11,6 +11,10 @@ const CreditFuelSale = require('../models/CreditFuelSale');
 const CreditOtherSale = require('../models/CreditOtherSale');
 const FuelType = require('../models/FuelType');
 const CreditPayment = require('../models/CreditPayment');
+const Tank = require('../models/Tank');
+const TankRecord = require('../models/TankRecord');
+const Pump = require('../models/Pump');
+const MeterReading = require('../models/MeterReading');
 
 const {
     GraphQLObjectType,
@@ -107,8 +111,8 @@ const FuelTypeType = new GraphQLObjectType({
     fields: () => ({
         _id: { type: new GraphQLNonNull(GraphQLID) },
         name: { type: new GraphQLNonNull(GraphQLString) },
-        priceList: { 
-            type: new GraphQLNonNull( new GraphQLList(PriceListType))
+        priceList: {
+            type: new GraphQLNonNull(new GraphQLList(PriceListType))
         },
 
     })
@@ -140,7 +144,7 @@ const CreditOtherSaleType = new GraphQLObjectType({
         total: { type: new GraphQLNonNull(GraphQLFloat) },
         date: { type: new GraphQLNonNull(GraphQLString) },
         itemList: {
-            type: new GraphQLNonNull( new GraphQLList(ItemListType))
+            type: new GraphQLNonNull(new GraphQLList(ItemListType))
         }
     })
 });
@@ -197,6 +201,53 @@ const CreditPaymentType = new GraphQLObjectType({
     })
 });
 
+const TankType = new GraphQLObjectType({
+    name: 'Tank',
+    fields: () => ({
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        fuelTypeId: { type: new GraphQLNonNull(GraphQLID) },
+        capacity: { type: new GraphQLNonNull(GraphQLFloat) },
+        availableAmount: { type: new GraphQLNonNull(GraphQLFloat) },
+        reservoir: { type: new GraphQLNonNull(GraphQLFloat) },
+    })
+});
+
+const TankRecordType = new GraphQLObjectType({
+    name: 'TankRecord',
+    fields: () => ({
+        _id: { type: new GraphQLNonNull(GraphQLID) },
+        tankId: { type: new GraphQLNonNull(GraphQLID) },
+        recordType: { type: new GraphQLNonNull(GraphQLString) },
+        inhandBalance: { type: new GraphQLNonNull(GraphQLFloat) },
+        amount: { type: new GraphQLNonNull(GraphQLFloat) },
+        expectedBalance: { type: new GraphQLNonNull(GraphQLFloat) },
+        realBalance: { type: new GraphQLNonNull(GraphQLFloat) },
+        pricePerUnit: { type: new GraphQLNonNull(GraphQLFloat) },
+        commission: { type: new GraphQLNonNull(GraphQLFloat) },
+        date: { type: new GraphQLNonNull(GraphQLString) },
+    })
+});
+
+const PumpType = new GraphQLObjectType({
+    name: 'Pump',
+    fields: () => ({
+        _id: { type: new GraphQLNonNull(GraphQLID) },
+        tankId: { type: new GraphQLNonNull(GraphQLID) },
+        name: { type: new GraphQLNonNull(GraphQLString) },
+    })
+});
+
+const MeterReadingType = new GraphQLObjectType({
+    name: 'MeterReading',
+    fields: () => ({
+        _id: { type: new GraphQLNonNull(GraphQLID) },
+        pumpId: { type: new GraphQLNonNull(GraphQLID) },
+        reading: { type: new GraphQLNonNull(GraphQLString)},
+        date: { type: new GraphQLNonNull(GraphQLString) },
+    })
+});
+
+
 
 /*
 const AuthorType = new GraphQLObjectType({
@@ -235,7 +286,7 @@ const RootQuery = new GraphQLObjectType({
         },
         product: {
             type: new GraphQLNonNull(ProductType),
-            args:{_id:{type: new GraphQLNonNull(GraphQLID)}},
+            args: { _id: { type: new GraphQLNonNull(GraphQLID) } },
 
             resolve(parent, args) { //Grab Data
                 return Product.findById(args._id);
@@ -431,7 +482,7 @@ const Mutation = new GraphQLObjectType({
                 return vehicle.save();
             }
         },
-        
+
 
         createCreditFuelSale: {
             type: CreditFuelSaleType,
@@ -497,23 +548,23 @@ const Mutation = new GraphQLObjectType({
                     orderNo: args.orderNo,
                     itemList: args.itemList,
                     date: args.date,
-                    total:10,
-                    invoiceNo:"dgergerg"
+                    total: 10,
+                    invoiceNo: "dgergerg"
                 });
                 return creditOtherSale.save();
 
             }
         },
 
-        createCreditPaymentlType: {
+        createCreditPayment: {
             type: CreditPaymentType,
             args: {
 
                 creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
-                paidAmount: { type: new GraphQLNonNull(GraphQLFloat)},
-                paymentType: { type: new GraphQLNonNull(GraphQLString)},
-                chequeNo: { type: GraphQLString},
-                date: { type: new GraphQLNonNull(GraphQLString)}
+                paidAmount: { type: new GraphQLNonNull(GraphQLFloat) },
+                paymentType: { type: new GraphQLNonNull(GraphQLString) },
+                chequeNo: { type: GraphQLString },
+                date: { type: new GraphQLNonNull(GraphQLString) }
             },
             resolve(parent, args) {
                 let creditPayment = new CreditPayment({
@@ -526,6 +577,94 @@ const Mutation = new GraphQLObjectType({
 
                 });
                 return creditPayment.save();
+            }
+        },
+
+        createTank: {
+            type: TankType,
+            args: {
+
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                fuelTypeId: { type: new GraphQLNonNull(GraphQLID) },
+                capacity: { type: new GraphQLNonNull(GraphQLFloat) },
+                availableAmount: { type: new GraphQLNonNull(GraphQLFloat) },
+                reservoir: { type: new GraphQLNonNull(GraphQLFloat) }
+            },
+            resolve(parent, args) {
+                let tank = new Tank({
+
+                    name: args.name,
+                    fuelTypeId: args.fuelTypeId,
+                    capacity: args.capacity,
+                    availableAmount: args.availableAmount,
+                    reservoir: args.reservoir
+
+                });
+                return tank.save();
+            }
+        },
+
+        createTankRecord: {
+            type: TankRecordType,
+            args: {
+
+                tankId: { type: new GraphQLNonNull(GraphQLID) },
+                recordType: { type: new GraphQLNonNull(GraphQLString) },
+                amount: { type: new GraphQLNonNull(GraphQLFloat) },
+                realBalance: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) }
+            },
+            resolve(parent, args) {
+                let tankRecord = new TankRecord({
+
+                    tankId: args.tankId,
+                    recordType: args.recordType,
+                    inhandBalance: 250,
+                    amount: args.amount,
+                    expectedBalance: 525,
+                    realBalance: args.realBalance,
+                    pricePerUnit: 25,
+                    commission: 4264,
+                    date: args.date
+
+                });
+                return tankRecord.save();
+            }
+        },
+        createPump: {
+            type: PumpType,
+            args: {
+
+                tankId: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: new GraphQLNonNull(GraphQLString) },
+            },
+            resolve(parent, args) {
+                let pump = new Pump({
+
+                    tankId: args.tankId,
+                    name: args.name,
+
+                });
+                return pump.save();
+            }
+        },
+        createMeterReading: {
+            type: MeterReadingType,
+            args: {
+
+                pumpId: { type: new GraphQLNonNull(GraphQLID) },
+                reading: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+            },
+            resolve(parent, args) {
+                let meterReading = new MeterReading({
+
+                    pumpId: args.pumpId,
+                    reading: args.reading,
+                    date: args.date,
+
+                });
+                return meterReading.save();
             }
         },
     }
