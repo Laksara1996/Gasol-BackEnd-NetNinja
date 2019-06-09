@@ -1,11 +1,9 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose =require('mongoose');
 
-const vehicleSchema = new Schema({
-    creditCustomerId:String,
-    regiterdNo: String,
-    fuelTypeId: String
-
+const vehicleSchema = new mongoose.Schema({
+    creditCustomerId:{type:mongoose.SchemaTypes.ObjectId,required:true,ref:'CreditCustomer'},
+    registerdNo:{type:String,required:false},
+    fuelType:{type:mongoose.SchemaTypes.ObjectId,required:true,ref:'FuelType'},
+   
 });
-
 module.exports = mongoose.model('Vehicle',vehicleSchema);

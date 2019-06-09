@@ -15,6 +15,7 @@ const Tank = require('../models/Tank');
 const TankRecord = require('../models/TankRecord');
 const Pump = require('../models/Pump');
 const MeterReading = require('../models/MeterReading');
+const Vehicle = require('../models/Vehicle');
 
 const {
     GraphQLObjectType,
@@ -242,10 +243,70 @@ const MeterReadingType = new GraphQLObjectType({
     fields: () => ({
         _id: { type: new GraphQLNonNull(GraphQLID) },
         pumpId: { type: new GraphQLNonNull(GraphQLID) },
-        reading: { type: new GraphQLNonNull(GraphQLString)},
+        reading: { type: new GraphQLNonNull(GraphQLString) },
         date: { type: new GraphQLNonNull(GraphQLString) },
     })
 });
+
+const saleDetails = new GraphQLObjectType({
+    name: 'saleDetails',
+    fields: () => ({
+        totalSaleIncome: { type: GraphQLFloat },
+        totalItemSold: { type: GraphQLFloat },
+        totalCommission: { type: GraphQLFloat },
+    })
+})
+
+const DailyLubricantSaleType = new GraphQLObjectType({
+    name: 'DailyLubricantSale',
+    fields: () => ({
+        _id: { type: new GraphQLNonNull(GraphQLID) },
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        units: { type: new GraphQLNonNull(GraphQLString) },
+        stock: {
+            type: new GraphQLNonNull(GraphQLList(StockType)),
+            resolve(parent, args) {
+                return Stock.find({ productId: parent.id });
+            }
+        },
+        saleDetails: {
+            type: new GraphQLNonNull(saleDetails),
+            resolve(parent, args) {
+                const ds = new Date(parent.date);
+                ds.setHours(0,0,0,0);
+                const df = new Date(parent.date);
+                df.setHours(23,59,59,999);
+                return Sale.
+                    aggregate([
+                        {
+                            $match: { date: { $gte: ds,$lte: df }, productId: parent._id }
+                        },
+                        {
+                            $group: {
+                                _id: "$productId",
+                                totalItemSold: {
+                                    $sum: "$quntity"
+                                },
+                                totalCommission: {
+                                    $sum: { $multiply: ["$quntity", "$commission"] }
+                                },
+                                totalSaleIncome: {
+                                    $sum: "$total"
+                                }
+                            },
+                        }
+                    ])
+                    .then(result => {
+                        return result[0] ? result[0] : { totalSaleIncome: 0,totalItemSold:0,totalCommission: 0}
+                    }).catch(error => {
+                        throw error;
+                    })
+
+            }
+        },
+    })
+});
+
 
 
 
@@ -308,11 +369,25 @@ const RootQuery = new GraphQLObjectType({
                 return CreditCustomer.find({});
             }
         },
+        creditFuelSale: {
+            type: new GraphQLNonNull(GraphQLList(CreditFuelSaleType)),
+
+            resolve(parent, args) { //Grab Data
+                return CreditFuelSale.find({});
+            }
+        },
         creditOtherSale: {
             type: new GraphQLNonNull(GraphQLList(CreditOtherSaleType)),
 
             resolve(parent, args) { //Grab Data
                 return CreditOtherSale.find({});
+            }
+        },
+        creditPayment: {
+            type: new GraphQLNonNull(GraphQLList(CreditPaymentType)),
+
+            resolve(parent, args) { //Grab Data
+                return CreditPayment.find({});
             }
         },
 
@@ -323,7 +398,57 @@ const RootQuery = new GraphQLObjectType({
                 return FuelType.find({});
             }
         },
+        meterReading: {
+            type: new GraphQLNonNull(GraphQLList(MeterReadingType)),
 
+            resolve(parent, args) { //Grab Data
+                return MeterReading.find({});
+            }
+        },
+        pump: {
+            type: new GraphQLNonNull(GraphQLList(PumpType)),
+
+            resolve(parent, args) { //Grab Data
+                return Pump.find({});
+            }
+        },
+        tankRecord: {
+            type: new GraphQLNonNull(GraphQLList(TankRecordType)),
+
+            resolve(parent, args) { //Grab Data
+                return TankRecord.find({});
+            }
+        },
+        tank: {
+            type: new GraphQLNonNull(GraphQLList(TankType)),
+
+            resolve(parent, args) { //Grab Data
+                return Tank.find({});
+            }
+        },
+        vehicle: {
+            type: new GraphQLNonNull(GraphQLList(VehicleType)),
+
+            resolve(parent, args) { //Grab Data
+                return Vehicle.find({});
+            }
+        },
+
+        dailyLubricantSale: {
+            type: new GraphQLNonNull(new GraphQLList(DailyLubricantSaleType)),
+            args: { date: { type: new GraphQLNonNull(GraphQLString) } },
+            resolve(parent, args) { //Grab Data
+                return Product.find()
+                    .exec()
+                    .then(result => {
+                        return result.map((value, index) => {
+                            return { ...value._doc, date: args.date }
+
+                        })
+                    })
+                    .catch(error => { throw error })
+            }
+        },
         /*
          author: {
              type: AuthorType,
@@ -407,6 +532,32 @@ const Mutation = new GraphQLObjectType({
 
                 });
                 return product.save();
+            }
+        },
+        deleteProduct: {
+            type: ProductType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return Product.findByIdAndDelete(args._id);
+            }
+        },
+        updateProduct: {
+            type: ProductType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                units: { type: new GraphQLNonNull(GraphQLString) },
+
+
+            },
+            resolve(parent, args) {
+                return Product.findOneAndUpdate({ _id: args._id }, { name: args.name, units: args.units });
             }
         },
         createSale: {
