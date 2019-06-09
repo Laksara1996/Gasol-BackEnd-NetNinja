@@ -10,6 +10,7 @@ const CreditCustomer = require('../models/CreditCustomer');
 const CreditFuelSale = require('../models/CreditFuelSale');
 const CreditOtherSale = require('../models/CreditOtherSale');
 const FuelType = require('../models/FuelType');
+const CreditPayment = require('../models/CreditPayment');
 
 const {
     GraphQLObjectType,
@@ -185,6 +186,17 @@ const CreditFuelSaleType = new GraphQLObjectType({
     })
 });
 
+const CreditPaymentType = new GraphQLObjectType({
+    name: 'CreditPayment',
+    fields: () => ({
+        creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
+        paidAmount: { type: new GraphQLNonNull(GraphQLFloat) },
+        paymentType: { type: new GraphQLNonNull(GraphQLString) },
+        chequeNo: { type: GraphQLString },
+        date: { type: new GraphQLNonNull(GraphQLString) },
+    })
+});
+
 
 /*
 const AuthorType = new GraphQLObjectType({
@@ -213,12 +225,20 @@ const RootQuery = new GraphQLObjectType({
                 return Stock.find({});
             }
         },
-        product: {
+        products: {
             type: new GraphQLNonNull(GraphQLList(ProductType)),
 
 
             resolve(parent, args) { //Grab Data
                 return Product.find({});
+            }
+        },
+        product: {
+            type: new GraphQLNonNull(ProductType),
+            args:{_id:{type: new GraphQLNonNull(GraphQLID)}},
+
+            resolve(parent, args) { //Grab Data
+                return Product.findById(args._id);
             }
         },
         sale: {
@@ -482,6 +502,30 @@ const Mutation = new GraphQLObjectType({
                 });
                 return creditOtherSale.save();
 
+            }
+        },
+
+        createCreditPaymentlType: {
+            type: CreditPaymentType,
+            args: {
+
+                creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
+                paidAmount: { type: new GraphQLNonNull(GraphQLFloat)},
+                paymentType: { type: new GraphQLNonNull(GraphQLString)},
+                chequeNo: { type: GraphQLString},
+                date: { type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve(parent, args) {
+                let creditPayment = new CreditPayment({
+
+                    creditCustomerId: args.creditCustomerId,
+                    paidAmount: args.paidAmount,
+                    paymentType: args.paymentType,
+                    chequeNo: args.chequeNo,
+                    date: args.date
+
+                });
+                return creditPayment.save();
             }
         },
     }
