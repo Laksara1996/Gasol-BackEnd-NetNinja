@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-mongoose.connect('mongodb+srv://gasol:gasol123@gasol-rlgxx.mongodb.net/gasol?retryWrites=true');
+mongoose.connect('mongodb+srv://gasol:gasol123@gasol-rlgxx.mongodb.net/gasol?retryWrites=true',{ useNewUrlParser: true });
 
 mongoose.connection.once('open',()=>{
     console.log('Connected');
