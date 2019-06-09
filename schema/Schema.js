@@ -9,6 +9,7 @@ const Product = require('../models/Product');
 const CreditCustomer = require('../models/CreditCustomer');
 const CreditFuelSale = require('../models/CreditFuelSale');
 const CreditOtherSale = require('../models/CreditOtherSale');
+const FuelType = require('../models/FuelType');
 
 const {
     GraphQLObjectType,
@@ -105,13 +106,24 @@ const FuelTypeType = new GraphQLObjectType({
     fields: () => ({
         _id: { type: new GraphQLNonNull(GraphQLID) },
         name: { type: new GraphQLNonNull(GraphQLString) },
-        priceList: { type: new GraphQLNonNull(GraphQLList(GraphQLString)) },
+        priceList: { 
+            type: new GraphQLNonNull( new GraphQLList(PriceListType))
+        },
 
     })
 });
 
-const PriceListTypeType = new GraphQLObjectType({
-    name: 'PriceListType',
+const PriceListType = new GraphQLObjectType({
+    name: 'PriceList',
+    fields: () => ({
+        price: { type: new GraphQLNonNull(GraphQLFloat) },
+        commission: { type: new GraphQLNonNull(GraphQLFloat) },
+        date: { type: new GraphQLNonNull(GraphQLString) },
+    })
+});
+
+const PriceListInputType = new GraphQLInputObjectType({
+    name: 'PriceListInput',
     fields: () => ({
         price: { type: new GraphQLNonNull(GraphQLFloat) },
         commission: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -172,6 +184,8 @@ const CreditFuelSaleType = new GraphQLObjectType({
         date: { type: new GraphQLNonNull(GraphQLString) },
     })
 });
+
+
 /*
 const AuthorType = new GraphQLObjectType({
     name: 'Author',
@@ -226,9 +240,16 @@ const RootQuery = new GraphQLObjectType({
         creditOtherSale: {
             type: new GraphQLNonNull(GraphQLList(CreditOtherSaleType)),
 
-
             resolve(parent, args) { //Grab Data
                 return CreditOtherSale.find({});
+            }
+        },
+
+        fuelType: {
+            type: new GraphQLNonNull(GraphQLList(FuelTypeType)),
+
+            resolve(parent, args) { //Grab Data
+                return FuelType.find({});
             }
         },
 
@@ -390,25 +411,7 @@ const Mutation = new GraphQLObjectType({
                 return vehicle.save();
             }
         },
-        createFuelType: {
-            type: FuelTypeType,
-            args: {
-
-                name: { type: new GraphQLNonNull(GraphQLString) },
-                priceList: { type: new GraphQLNonNull(GraphQLList(GraphQLString)) },
-
-
-            },
-            resolve(parent, args) {
-                let fuelType = new FuelType({
-
-                    name: args.name,
-                    priceListL: args.PriceList
-
-                });
-                return fuelType.save();
-            }
-        },
+        
 
         createCreditFuelSale: {
             type: CreditFuelSaleType,
@@ -435,6 +438,24 @@ const Mutation = new GraphQLObjectType({
                 });
                 return creditFuelSale.save();
 
+            }
+        },
+
+        createFuelType: {
+            type: FuelTypeType,
+            args: {
+
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                priceList: { type: new GraphQLNonNull(GraphQLList(PriceListInputType)) },
+            },
+            resolve(parent, args) {
+                let fuelType = new FuelType({
+
+                    name: args.name,
+                    priceList: args.priceList
+
+                });
+                return fuelType.save();
             }
         },
 
