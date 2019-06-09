@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const port = process.env.PORT || 4001;
 
 const app = express();
+app.use(cors());
+app.use(bodyParser.json());
 
 mongoose.connect('mongodb+srv://gasol:gasol123@gasol-rlgxx.mongodb.net/gasol?retryWrites=true');
 
