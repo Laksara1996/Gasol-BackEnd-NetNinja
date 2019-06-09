@@ -3,6 +3,8 @@ const graphqlHTTP = require('express-graphql');
 const schema = require('./schema/Schema');
 const mongoose = require('mongoose');
 const port = process.env.PORT || 4001;
+const cors =require('cors');
+const bodyParser = require('body-parser');
 
 const app = express();
 app.use(cors());
