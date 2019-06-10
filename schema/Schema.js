@@ -273,13 +273,13 @@ const DailyLubricantSaleType = new GraphQLObjectType({
             type: new GraphQLNonNull(saleDetails),
             resolve(parent, args) {
                 const ds = new Date(parent.date);
-                ds.setHours(0,0,0,0);
+                ds.setHours(0, 0, 0, 0);
                 const df = new Date(parent.date);
-                df.setHours(23,59,59,999);
+                df.setHours(23, 59, 59, 999);
                 return Sale.
                     aggregate([
                         {
-                            $match: { date: { $gte: ds,$lte: df }, productId: parent._id }
+                            $match: { date: { $gte: ds, $lte: df }, productId: parent._id }
                         },
                         {
                             $group: {
@@ -297,7 +297,7 @@ const DailyLubricantSaleType = new GraphQLObjectType({
                         }
                     ])
                     .then(result => {
-                        return result[0] ? result[0] : { totalSaleIncome: 0,totalItemSold:0,totalCommission: 0}
+                        return result[0] ? result[0] : { totalSaleIncome: 0, totalItemSold: 0, totalCommission: 0 }
                     }).catch(error => {
                         throw error;
                     })
@@ -492,7 +492,7 @@ const Mutation = new GraphQLObjectType({
 
                 productId: { type: new GraphQLNonNull(GraphQLID) },
                 quntity: { type: new GraphQLNonNull(GraphQLFloat) },
-                availableQuntity: { type: GraphQLFloat },
+                //availableQuntity: { type: GraphQLFloat },
                 price: { type: new GraphQLNonNull(GraphQLFloat) },
                 commission: { type: new GraphQLNonNull(GraphQLFloat) },
                 date: { type: new GraphQLNonNull(GraphQLString) },
@@ -503,12 +503,49 @@ const Mutation = new GraphQLObjectType({
 
                     productId: args.productId,
                     quntity: args.quntity,
-                    availableQuntity: args.availableQuntity,
+                    availableQuntity: 50,
                     price: args.price,
                     commission: args.commission,
                     date: args.date
                 });
                 return stock.save();
+            }
+        },
+        deleteStock: {
+            type: StockType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return Product.findByIdAndDelete(args._id);
+            }
+        },
+        updateStock: {
+            type: StockType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                productId: { type: new GraphQLNonNull(GraphQLID) },
+                quntity: { type: new GraphQLNonNull(GraphQLFloat) },
+                price: { type: new GraphQLNonNull(GraphQLFloat) },
+                commission: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+
+
+            },
+            resolve(parent, args) {
+                return Stock.findOneAndUpdate({ _id: args._id },
+                    {
+                        productId: args.productId,
+                        quntity: args.quntity,
+                        availableQuntity: 50,
+                        price: args.price,
+                        commission: args.commission,
+                        date: args.date
+                    });
             }
         },
         createProduct: {
@@ -557,7 +594,11 @@ const Mutation = new GraphQLObjectType({
 
             },
             resolve(parent, args) {
-                return Product.findOneAndUpdate({ _id: args._id }, { name: args.name, units: args.units });
+                return Product.findOneAndUpdate({ _id: args._id },
+                    {
+                        name: args.name,
+                        units: args.units
+                    });
             }
         },
         createSale: {
@@ -591,6 +632,44 @@ const Mutation = new GraphQLObjectType({
             }
         },
 
+        deleteSale: {
+            type: SaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return Sale.findByIdAndDelete(args._id);
+            }
+        },
+        updateSale: {
+            type: SaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                stockId: { type: new GraphQLNonNull(GraphQLID) },
+                quntity: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+
+
+            },
+            resolve(parent, args) {
+                return Sale.findOneAndUpdate({ _id: args._id },
+                    {
+                        stockId: args.stockId,
+                        quntity: args.quntity,
+                        date: args.date,
+                        productId: result.productId,
+                        price: result.price,
+                        commission: result.commission,
+                        total: 12,
+                        profit: 12,
+                    });
+            }
+        },
+
         createCreditCustomer: {
             type: CreditCustomerType,
             args: {
@@ -610,6 +689,41 @@ const Mutation = new GraphQLObjectType({
                     creditLimit: args, creditLimit
                 });
                 return creditCustomer.save();
+            }
+        },
+
+        deleteCreditCustomer: {
+            type: CreditCustomerType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return CreditCustomer.findByIdAndDelete(args._id);
+            }
+        },
+        updateCreditCustomer: {
+            type: CreditCustomerType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                address: { type: GraphQLString },
+                phoneNo: { type: GraphQLString },
+                creditLimit: { type: new GraphQLNonNull(GraphQLFloat) }
+
+
+            },
+            resolve(parent, args) {
+                return Sale.findOneAndUpdate({ _id: args._id },
+                    {
+                        name: args.name,
+                        address: args.address,
+                        phoneNo: args.phoneNo,
+                        creditLimit: args, creditLimit
+                    });
             }
         },
 
@@ -634,6 +748,38 @@ const Mutation = new GraphQLObjectType({
             }
         },
 
+        deleteVehicle: {
+            type: VehicleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return Vehicle.findByIdAndDelete(args._id);
+            }
+        },
+        updateVehicle: {
+            type: VehicleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
+                registerdNo: { type: new GraphQLNonNull(GraphQLString) },
+                fuelTypeId: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return Vehicle.findOneAndUpdate({ _id: args._id },
+                    {
+                        creditCustomerId: args.creditCustomerId,
+                        registerdNo: args.registerdNo,
+                        fuelTypeId: args.fuelTypeId
+                    });
+            }
+        },
 
         createCreditFuelSale: {
             type: CreditFuelSaleType,
@@ -663,6 +809,45 @@ const Mutation = new GraphQLObjectType({
             }
         },
 
+        deleteCreditFuelSale: {
+            type: CreditFuelSaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return CreditFuelSale.findByIdAndDelete(args._id);
+            }
+        },
+        updateCreditFuelSale: {
+            type: CreditFuelSaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                vehicleId: { type: new GraphQLNonNull(GraphQLID) },
+                orderNo: { type: GraphQLString },
+                amount: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+
+
+            },
+            resolve(parent, args) {
+                return CreditFuelSale.findOneAndUpdate({ _id: args._id },
+                    {
+                        vehicleId: args.vehicleId,
+                        orderNo: args.orderNo,
+                        amount: args.amount,
+                        creditCustomerId: null,
+                        invoiceNo: "Function to generate",
+                        fuelType: null,
+                        total: 12,
+                        date: args.date,
+                    });
+            }
+        },
+
         createFuelType: {
             type: FuelTypeType,
             args: {
@@ -681,6 +866,36 @@ const Mutation = new GraphQLObjectType({
             }
         },
 
+        deleteFuelType: {
+            type: FuelTypeType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return FuelType.findByIdAndDelete(args._id);
+            }
+        },
+        updateFuelType: {
+            type: FuelTypeType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                priceList: { type: new GraphQLNonNull(GraphQLList(PriceListInputType)) },
+
+
+            },
+            resolve(parent, args) {
+                return FuelType.findOneAndUpdate({ _id: args._id },
+                    {
+                        name: args.name,
+                        priceList: args.priceList
+                    });
+            }
+        },
         createCreditOtherSale: {
             type: CreditOtherSaleType,
             args: {
@@ -704,6 +919,43 @@ const Mutation = new GraphQLObjectType({
                 });
                 return creditOtherSale.save();
 
+            }
+        },
+
+        deleteCreditOtherSale: {
+            type: CreditOtherSaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return CreditOtherSale.findByIdAndDelete(args._id);
+            }
+        },
+        updateCreditOtherSale: {
+            type: CreditOtherSaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
+                orderNo: { type: GraphQLString },
+                itemList: { type: new GraphQLNonNull(GraphQLList(ItemListInputType)) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+
+
+            },
+            resolve(parent, args) {
+                return CreditOtherSale.findOneAndUpdate({ _id: args._id },
+                    {
+                        creditCustomerId: args.creditCustomerId,
+                        orderNo: args.orderNo,
+                        itemList: args.itemList,
+                        date: args.date,
+                        total: 10,
+                        invoiceNo: "dgergerg"
+                    });
             }
         },
 
@@ -731,6 +983,42 @@ const Mutation = new GraphQLObjectType({
             }
         },
 
+        deleteCreditPayment: {
+            type: CreditPaymentType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return CreditPayment.findByIdAndDelete(args._id);
+            }
+        },
+        updateCreditPayment: {
+            type: CreditPaymentType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
+                paidAmount: { type: new GraphQLNonNull(GraphQLFloat) },
+                paymentType: { type: new GraphQLNonNull(GraphQLString) },
+                chequeNo: { type: GraphQLString },
+                date: { type: new GraphQLNonNull(GraphQLString) }
+
+
+            },
+            resolve(parent, args) {
+                return CreditPayment.findOneAndUpdate({ _id: args._id },
+                    {
+                        creditCustomerId: args.creditCustomerId,
+                        paidAmount: args.paidAmount,
+                        paymentType: args.paymentType,
+                        chequeNo: args.chequeNo,
+                        date: args.date
+                    });
+            }
+        },
         createTank: {
             type: TankType,
             args: {
@@ -755,6 +1043,42 @@ const Mutation = new GraphQLObjectType({
             }
         },
 
+        deleteTank: {
+            type: TankType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return Tank.findByIdAndDelete(args._id);
+            }
+        },
+        updateTank: {
+            type: TankType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                fuelTypeId: { type: new GraphQLNonNull(GraphQLID) },
+                capacity: { type: new GraphQLNonNull(GraphQLFloat) },
+                availableAmount: { type: new GraphQLNonNull(GraphQLFloat) },
+                reservoir: { type: new GraphQLNonNull(GraphQLFloat) }
+
+
+            },
+            resolve(parent, args) {
+                return Tank.findOneAndUpdate({ _id: args._id },
+                    {
+                        name: args.name,
+                        fuelTypeId: args.fuelTypeId,
+                        capacity: args.capacity,
+                        availableAmount: args.availableAmount,
+                        reservoir: args.reservoir
+                    });
+            }
+        },
         createTankRecord: {
             type: TankRecordType,
             args: {
@@ -782,6 +1106,47 @@ const Mutation = new GraphQLObjectType({
                 return tankRecord.save();
             }
         },
+
+        deleteTankRecord: {
+            type: TankRecordType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return TankRecord.findByIdAndDelete(args._id);
+            }
+        },
+        updateTankRecord: {
+            type: TankRecordType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                tankId: { type: new GraphQLNonNull(GraphQLID) },
+                recordType: { type: new GraphQLNonNull(GraphQLString) },
+                amount: { type: new GraphQLNonNull(GraphQLFloat) },
+                realBalance: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) }
+
+
+            },
+            resolve(parent, args) {
+                return TankRecord.findOneAndUpdate({ _id: args._id },
+                    {
+                        tankId: args.tankId,
+                        recordType: args.recordType,
+                        inhandBalance: 250,
+                        amount: args.amount,
+                        expectedBalance: 525,
+                        realBalance: args.realBalance,
+                        pricePerUnit: 25,
+                        commission: 4264,
+                        date: args.date
+                    });
+            }
+        },
         createPump: {
             type: PumpType,
             args: {
@@ -797,6 +1162,36 @@ const Mutation = new GraphQLObjectType({
 
                 });
                 return pump.save();
+            }
+        },
+        deletePump: {
+            type: PumpType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return Pump.findByIdAndDelete(args._id);
+            }
+        },
+        updatePump: {
+            type: PumpType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                tankId: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: new GraphQLNonNull(GraphQLString) },
+
+
+            },
+            resolve(parent, args) {
+                return Pump.findOneAndUpdate({ _id: args._id },
+                    {
+                        tankId: args.tankId,
+                        name: args.name,
+                    });
             }
         },
         createMeterReading: {
@@ -816,6 +1211,38 @@ const Mutation = new GraphQLObjectType({
 
                 });
                 return meterReading.save();
+            }
+        },
+        deleteMeterReading: {
+            type: MeterReadingType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return MeterReading.findByIdAndDelete(args._id);
+            }
+        },
+        updateMeterReading: {
+            type: MeterReadingType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                pumpId: { type: new GraphQLNonNull(GraphQLID) },
+                reading: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+
+
+            },
+            resolve(parent, args) {
+                return MeterReading.findOneAndUpdate({ _id: args._id },
+                    {
+                        pumpId: args.pumpId,
+                        reading: args.reading,
+                        date: args.date,
+                    });
             }
         },
     }
