@@ -436,7 +436,9 @@ const RootQuery = new GraphQLObjectType({
 
         dailyLubricantSale: {
             type: new GraphQLNonNull(new GraphQLList(DailyLubricantSaleType)),
-            args: { date: { type: new GraphQLNonNull(GraphQLString) } },
+            args: { 
+                date: { type: new GraphQLNonNull(GraphQLString) } 
+            },
             resolve(parent, args) { //Grab Data
                 return Product.find()
                     .exec()
@@ -492,7 +494,6 @@ const Mutation = new GraphQLObjectType({
 
                 productId: { type: new GraphQLNonNull(GraphQLID) },
                 quntity: { type: new GraphQLNonNull(GraphQLFloat) },
-                //availableQuntity: { type: GraphQLFloat },
                 price: { type: new GraphQLNonNull(GraphQLFloat) },
                 commission: { type: new GraphQLNonNull(GraphQLFloat) },
                 date: { type: new GraphQLNonNull(GraphQLString) },
@@ -504,10 +505,31 @@ const Mutation = new GraphQLObjectType({
                     productId: args.productId,
                     quntity: args.quntity,
                     availableQuntity: 50,
+                    /*{ 
+                        type: GraphQLFloat,
+                        resolver (parent,args){
+                            return Stock.aggregate([
+                                {
+                                    $match: {productId: parent._id }
+                                },
+                                {
+                                    $group: {
+                                        _id: "$productId",
+
+                                        availableQuntity: {
+                                            $subtract: [{ $sum: ["availableQuntity"] },args.quntity]
+                                        },
+                                    },
+                                }
+                            ]);
+                        }
+                    },*/
+                   
                     price: args.price,
                     commission: args.commission,
                     date: args.date
                 });
+                console.log(stock);
                 return stock.save();
             }
         },
@@ -520,7 +542,7 @@ const Mutation = new GraphQLObjectType({
 
             },
             resolve(parent, args) {
-                return Product.findByIdAndDelete(args._id);
+                return Stock.findByIdAndDelete(args._id);
             }
         },
         updateStock: {
