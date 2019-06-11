@@ -436,8 +436,8 @@ const RootQuery = new GraphQLObjectType({
 
         dailyLubricantSale: {
             type: new GraphQLNonNull(new GraphQLList(DailyLubricantSaleType)),
-            args: { 
-                date: { type: new GraphQLNonNull(GraphQLString) } 
+            args: {
+                date: { type: new GraphQLNonNull(GraphQLString) }
             },
             resolve(parent, args) { //Grab Data
                 return Product.find()
@@ -493,6 +493,25 @@ const Mutation = new GraphQLObjectType({
             args: {
 
                 productId: { type: new GraphQLNonNull(GraphQLID) },
+                availableQuntity: {
+                    type: GraphQLFloat,
+                    resolver(parent, args) {
+                        return Stock.aggregate([
+                            {
+                                $match: { productId: parent._id }
+                            },
+                            {
+                                $group: {
+                                    _id: "$productId",
+
+                                    availableQuntity: {
+                                        $subtract: [{ $sum: ["availableQuntity"] }, args.quntity]
+                                    },
+                                },
+                            }
+                        ]);
+                    }
+                },
                 quntity: { type: new GraphQLNonNull(GraphQLFloat) },
                 price: { type: new GraphQLNonNull(GraphQLFloat) },
                 commission: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -504,27 +523,7 @@ const Mutation = new GraphQLObjectType({
 
                     productId: args.productId,
                     quntity: args.quntity,
-                    availableQuntity: 50,
-                    /*{ 
-                        type: GraphQLFloat,
-                        resolver (parent,args){
-                            return Stock.aggregate([
-                                {
-                                    $match: {productId: parent._id }
-                                },
-                                {
-                                    $group: {
-                                        _id: "$productId",
-
-                                        availableQuntity: {
-                                            $subtract: [{ $sum: ["availableQuntity"] },args.quntity]
-                                        },
-                                    },
-                                }
-                            ]);
-                        }
-                    },*/
-                   
+                    availableQuntity: args.availableQuntity,
                     price: args.price,
                     commission: args.commission,
                     date: args.date
@@ -708,7 +707,9 @@ const Mutation = new GraphQLObjectType({
                     name: args.name,
                     address: args.address,
                     phoneNo: args.phoneNo,
-                    creditLimit: args, creditLimit
+                    creditLimit: args.creditLimit,
+                    currentCredit:50
+
                 });
                 return creditCustomer.save();
             }
