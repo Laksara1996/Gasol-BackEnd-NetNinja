@@ -223,7 +223,7 @@ const CreditPaymentType = new GraphQLObjectType({
 const TankType = new GraphQLObjectType({
     name: 'Tank',
     fields: () => ({
-        _id:{ type: new GraphQLNonNull(GraphQLID) },
+        _id: { type: new GraphQLNonNull(GraphQLID) },
         name: { type: new GraphQLNonNull(GraphQLString) },
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
@@ -431,7 +431,7 @@ const WeeklyFuelSaleType = new GraphQLObjectType({
             }
         },
         secondWeekFuelSale: {
-            type: new GraphQLNonNull( new GraphQLList(weekFuelSaleType)),
+            type: new GraphQLNonNull(new GraphQLList(weekFuelSaleType)),
             resolve(parent, args) { //Grab Data
                 const ds = new Date();
                 ds.setHours(0, 0, 0, 0);
@@ -561,7 +561,7 @@ const MonthlyFuelSaleType = new GraphQLObjectType({
             }
         },
         secondmonthFuelSale: {
-            type: new GraphQLNonNull( new GraphQLList(weekFuelSaleType)),
+            type: new GraphQLNonNull(new GraphQLList(weekFuelSaleType)),
             resolve(parent, args) { //Grab Data
                 const ds = new Date();
                 ds.setHours(0, 0, 0, 0);
@@ -1667,13 +1667,13 @@ const Mutation = new GraphQLObjectType({
             args: {
 
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                priceList: { type: new GraphQLNonNull(GraphQLList(PriceListInputType)) },
+                priceList: { type: new GraphQLList(PriceListInputType) },
             },
             resolve(parent, args) {
                 let fuelType = new FuelType({
 
                     name: args.name,
-                    priceList: args.priceList
+                    priceList: args.priceList ? args.priceList : []
 
                 });
                 return fuelType.save();
@@ -1698,7 +1698,7 @@ const Mutation = new GraphQLObjectType({
 
                 _id: { type: new GraphQLNonNull(GraphQLID) },
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                priceList: { type: new GraphQLNonNull(GraphQLList(PriceListInputType)) },
+                priceList: { type: new GraphQLList(PriceListInputType) },
 
 
             },
@@ -1706,7 +1706,7 @@ const Mutation = new GraphQLObjectType({
                 return FuelType.findOneAndUpdate({ _id: args._id },
                     {
                         name: args.name,
-                        priceList: args.priceList
+                        priceList:args.priceList ? args.priceList : []
                     });
             }
         },
