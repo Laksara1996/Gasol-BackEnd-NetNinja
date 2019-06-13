@@ -224,7 +224,14 @@ const TankType = new GraphQLObjectType({
     name: 'Tank',
     fields: () => ({
         name: { type: new GraphQLNonNull(GraphQLString) },
-        fuelType: { type: new GraphQLNonNull(FuelTypeType) },
+        fuelType: {
+            type: new GraphQLNonNull(FuelTypeType),
+            resolve(parent, args) {
+                return FuelType.findById(parent._id).exec()
+                    .then(result => result._doc)
+                    .catch(error => { throw error })
+            }
+        },
         capacity: { type: new GraphQLNonNull(GraphQLFloat) },
         availableAmount: { type: new GraphQLNonNull(GraphQLFloat) },
         reservoir: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -257,7 +264,7 @@ const PumpType = new GraphQLObjectType({
             type: new GraphQLNonNull(GraphQLList(MeterReadingType)),
             resolve(parent, args) {
                 console.log(parent.id);
-                return MeterReading.find({pumpId:parent.id});
+                return MeterReading.find({ pumpId: parent.id });
 
             }
         }
@@ -333,56 +340,172 @@ const DailyLubricantSaleType = new GraphQLObjectType({
     })
 });
 
-/*const TodayFuelSaleType = new GraphQLObjectType({
+const TodayFuelSaleType = new GraphQLObjectType({
     name: 'TodayFuelSale',
     fields: () => ({
-        /*  _id: { type: new GraphQLNonNull(GraphQLID) },
-          name: { type: new GraphQLNonNull(GraphQLString) },
-          units: { type: new GraphQLNonNull(GraphQLString) },
-          stock: {
-              type: new GraphQLNonNull(GraphQLList(StockType)),
-              resolve(parent, args) {
-                  return Stock.find({ productId: parent.id });
-              }
-          },
-        totalFuelSale: {
-            type: new GraphQLNonNull(FuelSaleType),
-
+        _id: { type: new GraphQLNonNull(GraphQLID) },
+        fuelType: {
+            type: new GraphQLNonNull(FuelTypeType),
             resolve(parent, args) {
-                const ds = new Date(parent.date);
+                return FuelType.findById(parent._id).exec()
+                    .then(result => result._doc)
+                    .catch(error => { throw error })
+            }
+        },
+        totalFuelSale: {
+            type: new GraphQLNonNull(GraphQLFloat),
+        },
+    })
+});
+
+
+const weekFuelSaleType = new GraphQLObjectType({
+    name: 'WeekFuelSale',
+    fields: () => ({
+        _id: { type: new GraphQLNonNull(GraphQLID) },
+        fuelType: {
+            type: new GraphQLNonNull(FuelTypeType),
+            resolve(parent, args) {
+                return FuelType.findById(parent._id).exec()
+                    .then(result => result._doc)
+                    .catch(error => { throw error })
+            }
+        },
+        totalFuelSale: {
+            type: new GraphQLNonNull(GraphQLFloat),
+        },
+    })
+});
+
+const WeeklyFuelSaleType = new GraphQLObjectType({
+    name: 'WeeklyFuelSale',
+    fields: () => ({
+        firstWeekFuelSale: {
+            type: new GraphQLNonNull(new GraphQLList(weekFuelSaleType)),
+            resolve(parent, args) { //Grab Data
+                const ds = new Date();
                 ds.setHours(0, 0, 0, 0);
-                const df = new Date(parent.date);
+                const df = new Date();
+                ds.setDate(df.getDate() - 7)
                 df.setHours(23, 59, 59, 999);
-                return Sale.
+                return FuelSale.
                     aggregate([
                         {
-                            $match: { date: { $gte: ds, $lte: df }, productId: parent._id }
+                            $match: { date: { $gte: ds, $lte: df } }
                         },
                         {
                             $group: {
-                                _id: "$productId",
-                                totalItemSold: {
-                                    $sum: "$quntity"
+                                _id: "$fuelType",
+                                totalFuelSale: {
+                                    $sum: "$totalPrice"
                                 },
-                                totalCommission: {
-                                    $sum: { $multiply: ["$quntity", "$commission"] }
-                                },
-                                totalSaleIncome: {
-                                    $sum: "$total"
-                                }
                             },
                         }
                     ])
                     .then(result => {
-                        return result[0] ? result[0] : { totalSaleIncome: 0, totalItemSold: 0, totalCommission: 0 }
+                        console.log(result);
+                        return result
                     }).catch(error => {
                         throw error;
                     })
+            }
+        },
+        secondWeekFuelSale: {
+            type: new GraphQLNonNull( new GraphQLList(weekFuelSaleType)),
+            resolve(parent, args) { //Grab Data
+                const ds = new Date();
+                ds.setHours(0, 0, 0, 0);
+                const df = new Date();
+                ds.setDate(df.getDate() - 14)
+                df.setHours(23, 59, 59, 999);
+                df.setDate(df.getDate() - 7)
+                return FuelSale.
+                    aggregate([
+                        {
+                            $match: { date: { $gte: ds, $lte: df } }
+                        },
+                        {
+                            $group: {
+                                _id: "$fuelType",
+                                totalFuelSale: {
+                                    $sum: "$totalPrice"
+                                },
+                            },
+                        }
+                    ])
+                    .then(result => {
+                        console.log(result);
+                        return result
+                    }).catch(error => {
+                        throw error;
+                    })
+            }
+        },
+        thirdWeekFuelSale: {
+            type: new GraphQLNonNull(new GraphQLList(weekFuelSaleType)),
+            resolve(parent, args) { //Grab Data
+                const ds = new Date();
+                ds.setHours(0, 0, 0, 0);
+                const df = new Date();
+                ds.setDate(df.getDate() - 21)
+                df.setHours(23, 59, 59, 999);
+                df.setDate(df.getDate() - 14)
+                return FuelSale.
+                    aggregate([
+                        {
+                            $match: { date: { $gte: ds, $lte: df } }
+                        },
+                        {
+                            $group: {
+                                _id: "$fuelType",
+                                totalFuelSale: {
+                                    $sum: "$totalPrice"
+                                },
+                            },
+                        }
+                    ])
+                    .then(result => {
+                        console.log(result);
+                        return result
+                    }).catch(error => {
+                        throw error;
+                    })
+            }
+        },
+        fourthWeekFuelSale: {
+            type: new GraphQLNonNull(new GraphQLList(weekFuelSaleType)),
+            resolve(parent, args) { //Grab Data
+                const ds = new Date();
+                ds.setHours(0, 0, 0, 0);
+                const df = new Date();
 
+                ds.setDate(df.getDate() - 28)
+                df.setHours(23, 59, 59, 999);
+                df.setDate(df.getDate() - 21)
+                return FuelSale.
+                    aggregate([
+                        {
+                            $match: { date: { $gte: ds, $lte: df } }
+                        },
+                        {
+                            $group: {
+                                _id: "$fuelType",
+                                totalFuelSale: {
+                                    $sum: "$totalPrice"
+                                },
+                            },
+                        }
+                    ])
+                    .then(result => {
+                        console.log(result);
+                        return result
+                    }).catch(error => {
+                        throw error;
+                    })
             }
         },
     })
-});*/
+});
 
 /*
 const AuthorType = new GraphQLObjectType({
@@ -530,6 +653,43 @@ const RootQuery = new GraphQLObjectType({
                         })
                     })
                     .catch(error => { throw error })
+            }
+        },
+        todayFuelSale: {
+            type: new GraphQLNonNull(new GraphQLList(TodayFuelSaleType)),
+            resolve(parent, args) { //Grab Data
+                const ds = new Date();
+                ds.setHours(0, 0, 0, 0);
+                const df = new Date();
+                //ds.setDate(df.getDate()-7)
+                df.setHours(23, 59, 59, 999);
+                return FuelSale.
+                    aggregate([
+                        {
+                            $match: { date: { $gte: ds, $lte: df } }
+                        },
+                        {
+                            $group: {
+                                _id: "$fuelType",
+                                totalFuelSale: {
+                                    $sum: "$totalPrice"
+                                },
+                            },
+                        }
+                    ])
+                    .then(result => {
+                        console.log(result);
+                        return result
+                    }).catch(error => {
+                        throw error;
+                    })
+
+            }
+        },
+        weeklyFuelSale: {
+            type: new GraphQLNonNull(WeeklyFuelSaleType),
+            resolve(parent, args) { //Grab Data
+                return FuelSale.find()
             }
         },
         /*
