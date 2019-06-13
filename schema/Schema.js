@@ -228,7 +228,7 @@ const TankType = new GraphQLObjectType({
             type: new GraphQLNonNull(FuelTypeType),
             resolve(parent, args) {
                 console.log(parent);
-                return FuelType.findById(parent.fuelType).exec()
+                return FuelType.findById(parent.fuelTypeId).exec()
                     .then(result => result)
                     .catch(error => { throw error })
             }
