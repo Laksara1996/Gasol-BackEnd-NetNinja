@@ -123,6 +123,7 @@ const FuelTypeType = new GraphQLObjectType({
 const PriceListType = new GraphQLObjectType({
     name: 'PriceList',
     fields: () => ({
+        _id:{ type: new GraphQLNonNull(GraphQLID) },
         price: { type: new GraphQLNonNull(GraphQLFloat) },
         commission: { type: new GraphQLNonNull(GraphQLFloat) },
         date: { type: new GraphQLNonNull(GraphQLString) },
@@ -1661,7 +1662,35 @@ const Mutation = new GraphQLObjectType({
                     .catch(error => { throw error })
             }
         },
+        
+        insertPriceListToFuelType:{
+            type:FuelTypeType,
+            args: {
 
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                priceList: { type: new GraphQLNonNull(PriceListInputType) },
+            },
+            resolve(parent,args){
+                return FuelType.findOneAndUpdate({_id:args._id},{ $push: { priceList: args.priceList } }).exec()
+                .then(result=>FuelType.findOne({_id:args._id}).exec())
+                .then(result=>result)
+                .catch(error=>{throw error})
+            }
+        },
+        removePriceListFromFuelType:{
+            type:FuelTypeType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                priceListId: { type: new GraphQLNonNull(GraphQLID) },
+            },
+            resolve(parent,args){
+                return FuelType.findOneAndUpdate({_id:args._id},{ $pull: { priceList: { _id:args.priceListId } } }).exec()
+                .then(result=>FuelType.findOne({_id:args._id}).exec())
+                .then(result=>result)
+                .catch(error=>{throw error})
+            }
+        },
         createFuelType: {
             type: FuelTypeType,
             args: {
