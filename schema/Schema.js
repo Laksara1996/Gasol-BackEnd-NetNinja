@@ -223,6 +223,7 @@ const CreditPaymentType = new GraphQLObjectType({
 const TankType = new GraphQLObjectType({
     name: 'Tank',
     fields: () => ({
+        _id:{ type: new GraphQLNonNull(GraphQLID) },
         name: { type: new GraphQLNonNull(GraphQLString) },
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
