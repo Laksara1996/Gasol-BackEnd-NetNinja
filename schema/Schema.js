@@ -1009,7 +1009,7 @@ const RootQuery = new GraphQLObjectType({
             }
         },
         fuelTypeById: {
-            type: new GraphQLNonNull(GraphQLList(FuelTypeType)),
+            type: new GraphQLNonNull(FuelTypeType),
             args:{
                 _id:{ type : new GraphQLNonNull(GraphQLID)}
             },
