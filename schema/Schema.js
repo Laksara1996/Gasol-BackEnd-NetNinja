@@ -1014,8 +1014,11 @@ const RootQuery = new GraphQLObjectType({
                 _id:{ type : new GraphQLNonNull(GraphQLID)}
             },
             resolve(parent, args) { //Grab Data
-                return FuelType.find({_id:args._id}).exec()
-                .then(result=>result)
+                return FuelType.findOne({_id:args._id}).exec()
+                .then(result=>{
+                    console.log(result);
+                    return result
+                })
                 .catch(error=>{throw error});
             }
         },
