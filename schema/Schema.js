@@ -1014,7 +1014,9 @@ const RootQuery = new GraphQLObjectType({
                 _id:{ type : new GraphQLNonNull(GraphQLID)}
             },
             resolve(parent, args) { //Grab Data
-                return FuelType.find({_id:args._id});
+                return FuelType.find({_id:args._id}).exec()
+                .then(result=>result)
+                .catch(error=>{throw error});
             }
         },
         meterReading: {
