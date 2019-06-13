@@ -16,6 +16,7 @@ const TankRecord = require('../models/TankRecord');
 const Pump = require('../models/Pump');
 const MeterReading = require('../models/MeterReading');
 const Vehicle = require('../models/Vehicle');
+const FuelSale = require('../models/FuelSale');
 
 const {
     GraphQLObjectType,
@@ -144,6 +145,7 @@ const CreditOtherSaleType = new GraphQLObjectType({
         orderNo: { type: GraphQLString },
         total: { type: new GraphQLNonNull(GraphQLFloat) },
         date: { type: new GraphQLNonNull(GraphQLString) },
+        invoiceNo: { type: new GraphQLNonNull(GraphQLID) },
         itemList: {
             type: new GraphQLNonNull(new GraphQLList(ItemListType))
         }
@@ -178,7 +180,23 @@ const CreditFuelSaleType = new GraphQLObjectType({
         creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
         vehicleId: { type: new GraphQLNonNull(GraphQLID) },
         orderNo: { type: GraphQLString },
-        invoiceNo: { type: new GraphQLNonNull(GraphQLString) },
+        invoiceNo: { type: new GraphQLNonNull(GraphQLID) },
+        fuelType: {
+            type: new GraphQLNonNull(FuelTypeType),
+            resolve(parent, args) {
+                return FuelType.find({});
+            }
+        },
+        amount: { type: new GraphQLNonNull(GraphQLFloat) },
+        totalPrice: { type: new GraphQLNonNull(GraphQLFloat) },
+        date: { type: new GraphQLNonNull(GraphQLString) },
+    })
+});
+
+const FuelSaleType = new GraphQLObjectType({
+    name: 'FuelSale',
+    fields: () => ({
+        _id: { type: new GraphQLNonNull(GraphQLID) },
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
             resolve(parent, args) {
@@ -206,7 +224,7 @@ const TankType = new GraphQLObjectType({
     name: 'Tank',
     fields: () => ({
         name: { type: new GraphQLNonNull(GraphQLString) },
-        fuelTypeId: { type: new GraphQLNonNull(GraphQLID) },
+        fuelType: { type: new GraphQLNonNull(FuelTypeType) },
         capacity: { type: new GraphQLNonNull(GraphQLFloat) },
         availableAmount: { type: new GraphQLNonNull(GraphQLFloat) },
         reservoir: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -233,8 +251,16 @@ const PumpType = new GraphQLObjectType({
     name: 'Pump',
     fields: () => ({
         _id: { type: new GraphQLNonNull(GraphQLID) },
-        tankId: { type: new GraphQLNonNull(GraphQLID) },
+        tankId: { type: new GraphQLNonNull(TankType) },
         name: { type: new GraphQLNonNull(GraphQLString) },
+        pumpRecords: {
+            type: new GraphQLNonNull(GraphQLList(MeterReadingType)),
+            resolve(parent, args) {
+                console.log(parent.id);
+                return MeterReading.find({pumpId:parent.id});
+
+            }
+        }
     })
 });
 
@@ -307,8 +333,56 @@ const DailyLubricantSaleType = new GraphQLObjectType({
     })
 });
 
+/*const TodayFuelSaleType = new GraphQLObjectType({
+    name: 'TodayFuelSale',
+    fields: () => ({
+        /*  _id: { type: new GraphQLNonNull(GraphQLID) },
+          name: { type: new GraphQLNonNull(GraphQLString) },
+          units: { type: new GraphQLNonNull(GraphQLString) },
+          stock: {
+              type: new GraphQLNonNull(GraphQLList(StockType)),
+              resolve(parent, args) {
+                  return Stock.find({ productId: parent.id });
+              }
+          },
+        totalFuelSale: {
+            type: new GraphQLNonNull(FuelSaleType),
 
+            resolve(parent, args) {
+                const ds = new Date(parent.date);
+                ds.setHours(0, 0, 0, 0);
+                const df = new Date(parent.date);
+                df.setHours(23, 59, 59, 999);
+                return Sale.
+                    aggregate([
+                        {
+                            $match: { date: { $gte: ds, $lte: df }, productId: parent._id }
+                        },
+                        {
+                            $group: {
+                                _id: "$productId",
+                                totalItemSold: {
+                                    $sum: "$quntity"
+                                },
+                                totalCommission: {
+                                    $sum: { $multiply: ["$quntity", "$commission"] }
+                                },
+                                totalSaleIncome: {
+                                    $sum: "$total"
+                                }
+                            },
+                        }
+                    ])
+                    .then(result => {
+                        return result[0] ? result[0] : { totalSaleIncome: 0, totalItemSold: 0, totalCommission: 0 }
+                    }).catch(error => {
+                        throw error;
+                    })
 
+            }
+        },
+    })
+});*/
 
 /*
 const AuthorType = new GraphQLObjectType({
@@ -374,6 +448,13 @@ const RootQuery = new GraphQLObjectType({
 
             resolve(parent, args) { //Grab Data
                 return CreditFuelSale.find({});
+            }
+        },
+        fuelSale: {
+            type: new GraphQLNonNull(GraphQLList(FuelSaleType)),
+
+            resolve(parent, args) { //Grab Data
+                return FuelSale.find({});
             }
         },
         creditOtherSale: {
@@ -483,7 +564,7 @@ const Mutation = new GraphQLObjectType({
                 let author = new Author({
                     name: args.name,
                     age: args.age
-
+ 
                 });
                 return author.save();
             }
@@ -493,25 +574,6 @@ const Mutation = new GraphQLObjectType({
             args: {
 
                 productId: { type: new GraphQLNonNull(GraphQLID) },
-                availableQuntity: {
-                    type: GraphQLFloat,
-                    resolver(parent, args) {
-                        return Stock.aggregate([
-                            {
-                                $match: { productId: parent._id }
-                            },
-                            {
-                                $group: {
-                                    _id: "$productId",
-
-                                    availableQuntity: {
-                                        $subtract: [{ $sum: ["availableQuntity"] }, args.quntity]
-                                    },
-                                },
-                            }
-                        ]);
-                    }
-                },
                 quntity: { type: new GraphQLNonNull(GraphQLFloat) },
                 price: { type: new GraphQLNonNull(GraphQLFloat) },
                 commission: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -520,10 +582,9 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent, args) {
                 let stock = new Stock({
-
                     productId: args.productId,
                     quntity: args.quntity,
-                    availableQuntity: args.availableQuntity,
+                    availableQuntity: args.quntity,
                     price: args.price,
                     commission: args.commission,
                     date: args.date
@@ -562,7 +623,7 @@ const Mutation = new GraphQLObjectType({
                     {
                         productId: args.productId,
                         quntity: args.quntity,
-                        availableQuntity: 50,
+                        availableQuntity: args.quntity,
                         price: args.price,
                         commission: args.commission,
                         date: args.date
@@ -642,8 +703,8 @@ const Mutation = new GraphQLObjectType({
                             productId: result.productId,
                             price: result.price,
                             commission: result.commission,
-                            total: 12,
-                            profit: 12,
+                            total: result.price * args.quntity,
+                            profit: result.commission * args.quntity,
 
                         }).save()
                     })
@@ -685,8 +746,8 @@ const Mutation = new GraphQLObjectType({
                         productId: result.productId,
                         price: result.price,
                         commission: result.commission,
-                        total: 12,
-                        profit: 12,
+                        total: result.price * args.quntity,
+                        profit: result.commission * args.quntity,
                     });
             }
         },
@@ -694,7 +755,6 @@ const Mutation = new GraphQLObjectType({
         createCreditCustomer: {
             type: CreditCustomerType,
             args: {
-
 
                 name: { type: new GraphQLNonNull(GraphQLString) },
                 address: { type: GraphQLString },
@@ -708,7 +768,7 @@ const Mutation = new GraphQLObjectType({
                     address: args.address,
                     phoneNo: args.phoneNo,
                     creditLimit: args.creditLimit,
-                    currentCredit:50
+                    currentCredit: 0
 
                 });
                 return creditCustomer.save();
@@ -745,7 +805,8 @@ const Mutation = new GraphQLObjectType({
                         name: args.name,
                         address: args.address,
                         phoneNo: args.phoneNo,
-                        creditLimit: args, creditLimit
+                        creditLimit: args.creditLimit,
+                        currentCredit: 0
                     });
             }
         },
@@ -807,7 +868,6 @@ const Mutation = new GraphQLObjectType({
         createCreditFuelSale: {
             type: CreditFuelSaleType,
             args: {
-
                 vehicleId: { type: new GraphQLNonNull(GraphQLID) },
                 orderNo: { type: GraphQLString },
                 amount: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -821,14 +881,37 @@ const Mutation = new GraphQLObjectType({
                     orderNo: args.orderNo,
                     amount: args.amount,
                     creditCustomerId: null,
-                    invoiceNo: "Function to generate",
+                    //invoiceNo: "Function to generate",
                     fuelType: null,
-                    total: 12,
+                    totalPrice: 0,
                     date: args.date,
 
                 });
-                return creditFuelSale.save();
-
+                return Vehicle.findById(args.vehicleId).exec()
+                    .then(result => {
+                        creditFuelSale.creditCustomerId = result._doc.creditCustomerId;
+                        creditFuelSale.fuelType = result._doc.fuelType;
+                        return FuelType.aggregate([
+                            { $unwind: '$priceList' },        // 1. Unwind the "priceList" array
+                            { $sort: { 'priceList.date': 1 } },  // 2. Sort by "date"
+                            {
+                                $group: {                   // 3. Return only the largest "key"
+                                    _id: '$_id',             //    which is the last item in the group
+                                    priceList: { $last: '$priceList' }
+                                }
+                            },
+                            {
+                                $match: { _id: result._doc.fuelType }
+                            }
+                        ]).exec()
+                    })
+                    .then(result => {
+                        console.log(result);
+                        creditFuelSale.totalPrice = result[0].priceList.price * args.amount;
+                        return creditFuelSale.save()
+                    })
+                    .then(result => result._doc)
+                    .catch(error => { throw error })
             }
         },
 
@@ -857,17 +940,154 @@ const Mutation = new GraphQLObjectType({
 
             },
             resolve(parent, args) {
-                return CreditFuelSale.findOneAndUpdate({ _id: args._id },
-                    {
-                        vehicleId: args.vehicleId,
-                        orderNo: args.orderNo,
-                        amount: args.amount,
-                        creditCustomerId: null,
-                        invoiceNo: "Function to generate",
-                        fuelType: null,
-                        total: 12,
-                        date: args.date,
-                    });
+                let creditFuelSale = {
+                    vehicleId: args.vehicleId,
+                    orderNo: args.orderNo,
+                    amount: args.amount,
+                    creditCustomerId: null,
+                    //invoiceNo: "Function to generate",
+                    fuelType: null,
+                    totalPrice: 0,
+                    date: args.date,
+                };
+                return Vehicle.findById(args.vehicleId)
+                    .exec()
+                    .then(result => {
+                        creditFuelSale.creditCustomerId = result._doc.creditCustomerId;
+                        creditFuelSale.fuelType = result._doc.fuelType;
+                        return FuelType.aggregate([
+                            { $unwind: '$priceList' },        // 1. Unwind the "priceList" array
+                            { $sort: { 'priceList.date': 1 } },  // 2. Sort by "date"
+                            {
+                                $group: {                   // 3. Return only the largest "key"
+                                    _id: '$_id',             //    which is the last item in the group
+                                    priceList: { $last: '$priceList' }
+                                }
+                            },
+                            {
+                                $match: { _id: result._doc.fuelType }
+                            }
+                        ]).exec()
+                    })
+                    .then(result => {
+                        console.log(result);
+                        creditFuelSale.totalPrice = result[0].priceList.price * args.amount;
+                        return CreditFuelSale.findOneAndUpdate({ _id: args._id }, creditFuelSale)
+                            .exec();
+                    })
+                    .then(result => result._doc)
+                    .catch(error => { throw error })
+            }
+        },
+
+        createFuelSale: {
+            type: FuelSaleType,
+            args: {
+
+                amount: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+                fuelType: { type: new GraphQLNonNull(GraphQLID) }
+
+            },
+            resolve(parent, args, context) {
+                let fuelSale = new FuelSale({
+
+                    amount: args.amount,
+                    fuelType: args.fuelType,
+                    totalPrice: 0,
+                    date: args.date,
+
+                });
+                //return fuelSale.save();
+                return FuelType.findById(args.fuelType)
+                    .exec()
+                    .then(result => {
+
+                        fuelSale.fuelType = result._doc._id;
+                        return FuelType.aggregate([
+                            { $unwind: '$priceList' },        // 1. Unwind the "priceList" array
+                            { $sort: { 'priceList.date': 1 } },  // 2. Sort by "date"
+                            {
+                                $group: {                   // 3. Return only the largest "key"
+                                    _id: '$_id',             //    which is the last item in the group
+                                    priceList: { $last: '$priceList' }
+                                }
+                            },
+                            {
+                                $match: { _id: result._doc._id }
+                            }
+                        ]).exec()
+                    })
+                    .then(result => {
+                        console.log(result);
+                        fuelSale.totalPrice = result[0].priceList.price * args.amount;
+                        return fuelSale.save()
+
+                    })
+                    .then(result => result._doc)
+                    .catch(error => { throw error })
+
+            }
+        },
+
+        deleteFuelSale: {
+            type: FuelSaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                return FuelSale.findByIdAndDelete(args._id);
+            }
+        },
+        updateFuelSale: {
+            type: FuelSaleType,
+            args: {
+
+                _id: { type: new GraphQLNonNull(GraphQLID) },
+                amount: { type: new GraphQLNonNull(GraphQLFloat) },
+                date: { type: new GraphQLNonNull(GraphQLString) },
+                fuelType: { type: new GraphQLNonNull(GraphQLID) },
+
+
+            },
+            resolve(parent, args) {
+                let FuelSale =
+                {
+                    amount: args.amount,
+                    fuelType: args.fuelType,
+                    totalPrice: 12,
+                    date: args.date,
+                };
+                return FuelType.findById(args.fuelType)
+                    .exec()
+                    .then(result => {
+
+                        fuelSale.fuelType = result._doc._id;
+                        return FuelType.aggregate([
+                            { $unwind: '$priceList' },        // 1. Unwind the "priceList" array
+                            { $sort: { 'priceList.date': 1 } },  // 2. Sort by "date"
+                            {
+                                $group: {                   // 3. Return only the largest "key"
+                                    _id: '$_id',             //    which is the last item in the group
+                                    priceList: { $last: '$priceList' }
+                                }
+                            },
+                            {
+                                $match: { _id: result._doc._id }
+                            }
+                        ]).exec()
+                    })
+                    .then(result => {
+                        console.log(result);
+                        fuelSale.totalPrice = result[0].priceList.price * args.amount;
+                        return fuelSale.save()
+
+                    })
+                    .then(result => result._doc)
+                    .catch(error => { throw error })
             }
         },
 
@@ -930,18 +1150,21 @@ const Mutation = new GraphQLObjectType({
 
             },
             resolve(parent, args, context) {
-                console.log(args);
+                //console.log(args);
                 let creditOtherSale = new CreditOtherSale({
 
                     creditCustomerId: args.creditCustomerId,
                     orderNo: args.orderNo,
                     itemList: args.itemList,
                     date: args.date,
-                    total: 10,
-                    invoiceNo: "dgergerg"
+                    total: 0,
+                    //invoiceNo: "dgergerg"
                 });
+                args.itemList.forEach(element => {
+                    creditOtherSale.total += element.pricePerUnit * element.quntity;
+                });
+                //console.log(creditOtherSale.total);
                 return creditOtherSale.save();
-
             }
         },
 
@@ -970,16 +1193,21 @@ const Mutation = new GraphQLObjectType({
 
             },
             resolve(parent, args) {
-                return CreditOtherSale.findOneAndUpdate({ _id: args._id },
-                    {
-                        creditCustomerId: args.creditCustomerId,
-                        orderNo: args.orderNo,
-                        itemList: args.itemList,
-                        date: args.date,
-                        total: 10,
-                        invoiceNo: "dgergerg"
-                    });
+                let creditOtherSale =
+                {
+                    creditCustomerId: args.creditCustomerId,
+                    orderNo: args.orderNo,
+                    itemList: args.itemList,
+                    date: args.date,
+                    total: 0,
+                    //invoiceNo: "dgergerg"
+                };
+                args.itemList.forEach(element => {
+                    creditOtherSale.total += element.pricePerUnit * element.quntity;
+                });
+                return creditOtherSale.save();
             }
+
         },
 
         createCreditPayment: {
@@ -994,13 +1222,11 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent, args) {
                 let creditPayment = new CreditPayment({
-
                     creditCustomerId: args.creditCustomerId,
                     paidAmount: args.paidAmount,
                     paymentType: args.paymentType,
                     chequeNo: args.chequeNo,
                     date: args.date
-
                 });
                 return creditPayment.save();
             }
@@ -1182,9 +1408,12 @@ const Mutation = new GraphQLObjectType({
 
                     tankId: args.tankId,
                     name: args.name,
+                    //pumpRecords:0 
 
                 });
                 return pump.save();
+
+
             }
         },
         deletePump: {

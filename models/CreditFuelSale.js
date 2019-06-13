@@ -5,7 +5,7 @@ const creditFuelSaleSchema = new Schema({
     creditCustomerId:{type:mongoose.SchemaTypes.ObjectId,required:true,ref:'CreditCustomer'},
     vehicleId:{type:mongoose.SchemaTypes.ObjectId,required:true,ref:'Vehicle'},
     orderNo:{type:String,required:false},
-    invoiceNo:{type:String,required:true},
+    //invoiceNo:{type:ObjectId,required:true},
     fuelType:{type:mongoose.SchemaTypes.ObjectId,required:true,ref:'FuelType'},
     amount:{type:Number,required:true},
     totalPrice:{type:Number,required:true},
