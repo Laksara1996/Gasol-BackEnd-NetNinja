@@ -1008,6 +1008,15 @@ const RootQuery = new GraphQLObjectType({
                 return FuelType.find({});
             }
         },
+        fuelTypeById: {
+            type: new GraphQLNonNull(GraphQLList(FuelTypeType)),
+            args:{
+                _id:{ type : new GraphQLNonNull(GraphQLID)}
+            },
+            resolve(parent, args) { //Grab Data
+                return FuelType.find({_id:args._id});
+            }
+        },
         meterReading: {
             type: new GraphQLNonNull(GraphQLList(MeterReadingType)),
 
