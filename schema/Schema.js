@@ -197,7 +197,11 @@ const CreditFuelSaleType = new GraphQLObjectType({
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
             resolve(parent, args) {
-                return FuelType.find({});
+               return Vehicle.findById(parent.vehicleId).exec()
+               .then(result=>{
+                return FuelType.findOne({_id:result.fuelType})
+               })    
+                
             }
         },
         amount: { type: new GraphQLNonNull(GraphQLFloat) },
