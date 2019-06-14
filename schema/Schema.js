@@ -97,7 +97,12 @@ const VehicleType = new GraphQLObjectType({
     name: 'Vehicle',
     fields: () => ({
         _id: { type: new GraphQLNonNull(GraphQLID) },
-        creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
+        creditCustomerId: { 
+            type: new GraphQLNonNull(CreditCustomerType),
+            resolve(parent, args) {
+                return CreditCustomer.findOne({_id:parent.creditCustomerId})
+            }
+        },
         registerdNo: { type: new GraphQLNonNull(GraphQLString) },
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
