@@ -206,7 +206,7 @@ const FuelSaleType = new GraphQLObjectType({
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
             resolve(parent, args) {
-                return FuelType.find({});
+                return FuelType.findOne({_id:parent.fuelType})
             }
         },
         amount: { type: new GraphQLNonNull(GraphQLFloat) },
