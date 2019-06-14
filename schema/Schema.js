@@ -183,7 +183,14 @@ const CreditFuelSaleType = new GraphQLObjectType({
     name: 'CreditFuelSale',
     fields: () => ({
         _id: { type: new GraphQLNonNull(GraphQLID) },
-        creditCustomerId: { type: new GraphQLNonNull(GraphQLID) },
+        creditCustomerId: { 
+            
+            type: new GraphQLNonNull(CreditCustomerType),
+            resolve(parent, args) {
+                console.log(parent);
+                return CreditCustomer.findOne({_id:parent.creditCustomerId});
+            }
+        },
         vehicleId: { type: new GraphQLNonNull(GraphQLID) },
         orderNo: { type: GraphQLString },
         invoiceNo: { type: new GraphQLNonNull(GraphQLID) },
