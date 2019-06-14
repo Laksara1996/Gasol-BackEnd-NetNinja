@@ -193,7 +193,7 @@ const CreditFuelSaleType = new GraphQLObjectType({
         },
         vehicleId: { type: new GraphQLNonNull(GraphQLID) },
         orderNo: { type: GraphQLString },
-        invoiceNo: { type: new GraphQLNonNull(GraphQLID) },
+        //invoiceNo: { type: new GraphQLNonNull(GraphQLID) },
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
             resolve(parent, args) {
