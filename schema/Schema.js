@@ -102,7 +102,7 @@ const VehicleType = new GraphQLObjectType({
         fuelType: {
             type: new GraphQLNonNull(FuelTypeType),
             resolve(parent, args) {
-                return FuelType.find({});
+                return FuelType.findOne({_id:parent.fuelType})
             }
         }
     })
@@ -1052,7 +1052,6 @@ const RootQuery = new GraphQLObjectType({
         },
         vehicle: {
             type: new GraphQLNonNull(GraphQLList(VehicleType)),
-
             resolve(parent, args) { //Grab Data
                 return Vehicle.find({});
             }
