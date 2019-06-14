@@ -1386,7 +1386,7 @@ const Mutation = new GraphQLObjectType({
 
             },
             resolve(parent, args) {
-                return Sale.findOneAndUpdate({ _id: args._id },
+                return CreditCustomer.findOneAndUpdate({ _id: args._id },
                     {
                         name: args.name,
                         address: args.address,
